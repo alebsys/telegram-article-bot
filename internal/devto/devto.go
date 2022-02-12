@@ -12,8 +12,15 @@ import (
 )
 
 const (
+	tag       = ""
 	freshness = "10"
 	limit     = 10
+	url       = "https://dev.to/api/articles"
+	dotSymbol = 9865 // unicode symbol of dot '⚉' https://unicodeplus.com/U+2689
+)
+
+var (
+	rgxp = [4]string{`^/article\s{1}[a-zA-z]+\s[1-9][0-9]*\s[1-9][0-9]*$`, `^/article\s{1}[a-zA-z]+\s[1-9][0-9]*$`, `^/article\s{1}[a-zA-z]*$`, `^/article$`}
 )
 
 type Query struct {
@@ -28,69 +35,56 @@ type Article struct {
 }
 type Articles []Article
 
-// ParseInput parse input from user and return true if inpur
-func ParseInput(text string) bool {
-	m, _ := regexp.MatchString(`^/article\s{1}[a-zA-z]+\s[1-9][0-9]*\s[1-9][0-9]*$`, text)
-	if m {
-		return m
-	}
-	m, _ = regexp.MatchString(`^/article\s{1}[a-zA-z]+\s[1-9][0-9]*$`, text)
-	if m {
-		return m
-	}
-	m, _ = regexp.MatchString(`^/article\s{1}[a-zA-z]*$`, text)
-	if m {
-		return m
-	}
-	m, _ = regexp.MatchString(`^/article$`, text)
-	if m {
-		return m
+// ParseInput parse input from user and return true if input valid
+// User input must be of the format: '/article go 10 5' or '/article go 10' or '/article go' or '/article'
+func ParseInput(input string) bool {
+	for i := range rgxp {
+		m, _ := regexp.MatchString(rgxp[i], input)
+		if m {
+			return m
+		}
 	}
 	return false
 }
 
 // NewQuery makes query to DEV.TO API from user input
-func NewQuery(text string) *Query {
-	q := new(Query)
+func NewQuery(input string) *Query {
+	query := &Query{
+		Tag:       tag,
+		Freshness: freshness,
+		Limit:     limit,
+	}
 
-	m := strings.Split(text, " ")
+	msg := strings.Split(input, " ")
 
-	switch len(m) {
-	case 1:
-		q.Tag = ""
-		q.Freshness = freshness
-		q.Limit = limit
+	switch len(msg) {
 	case 2:
-		q.Tag = m[1]
-		q.Freshness = freshness
-		q.Limit = limit
+		query.Tag = msg[1]
 	case 3:
-		q.Tag = m[1]
-		q.Freshness = m[2]
-		q.Limit = limit
+		query.Tag = msg[1]
+		query.Freshness = msg[2]
 	case 4:
-		q.Tag = m[1]
-		q.Freshness = m[2]
-
-		c, _ := strconv.Atoi(m[3])
-		if c > 30 {
-			q.Limit = 30
+		query.Tag = msg[1]
+		query.Freshness = msg[2]
+		limit, _ := strconv.Atoi(msg[3])
+		if limit > 30 {
+			query.Limit = 30
 		} else {
-			q.Limit, _ = strconv.Atoi(m[3])
+			query.Limit, _ = strconv.Atoi(msg[3])
 		}
 	}
-	return q
+	return query
 }
 
 // GetArticles makes request to DEV.TO API and return Articles struct
-func GetArticles(tag, fr string) (*Articles, error) {
+func GetArticles(tag, fresh string) (*Articles, error) {
 	articles := new(Articles)
 
-	url := fmt.Sprintf("https://dev.to/api/articles?tag=%s&top=%s", tag, fr)
+	url := fmt.Sprintf("%s?tag=%s&top=%s", url, tag, fresh)
 
 	resp, err := http.Get(url)
 	if err != nil {
-		return nil, fmt.Errorf("error when makes http GET: %v", err)
+		return nil, fmt.Errorf("error when makes http GET from %s: %v", url, err)
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
@@ -113,7 +107,7 @@ func (articles *Articles) WriteArticles(limit int) string {
 		if i >= limit {
 			break
 		}
-		buf.WriteRune(9865)
+		buf.WriteRune(dotSymbol)
 		buf.WriteString(fmt.Sprintf(" [%s](%s)\n`  Score: %d`\n\n", a.Title, a.Url, a.Score))
 
 	}
