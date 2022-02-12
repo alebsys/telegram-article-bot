@@ -13,7 +13,6 @@ const (
 )
 
 func main() {
-
 	bot, err := tgbotapi.NewBotAPI(os.Getenv("TELEGRAM_APITOKEN"))
 	if err != nil {
 		log.Panic("getting TELEGRAM_APITOKEN: ", err)
@@ -46,7 +45,6 @@ func main() {
 
 			b := devto.ParseInput(input)
 			if !b {
-				log.Print(err)
 				msg.Text = note
 				break
 			}
@@ -54,7 +52,7 @@ func main() {
 			query := devto.NewQuery(input)
 			articles, err := devto.GetArticles(query.Tag, query.Freshness)
 			if err != nil {
-				log.Panic(err)
+				log.Print(err)
 			}
 
 			msg.Text = articles.WriteArticles(query.Limit)
