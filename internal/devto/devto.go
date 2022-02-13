@@ -79,11 +79,11 @@ func WithLimit(limit string) QueryOption {
 func ValidateInput(input string) bool {
 	for i := range rgxp {
 		matched, _ := regexp.MatchString(rgxp[i], input)
-		if !matched {
-			return false
+		if matched {
+			return true
 		}
 	}
-	return true
+	return false
 }
 
 // ParseInput parse user input string and construct Query.
