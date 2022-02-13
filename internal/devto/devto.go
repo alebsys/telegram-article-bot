@@ -93,7 +93,7 @@ func ParseInput(input string) (*Query, error) {
 	copy(args, argsSplit)
 
 	var tag, freshness, limit string
-	unpackSliceTostring(args[1:], &tag, &freshness, &limit)
+	unpackSliceToString(args[1:], &tag, &freshness, &limit)
 
 	query := NewQuery(
 		WithTag(tag),
