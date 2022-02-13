@@ -43,16 +43,21 @@ func main() {
 		case "article":
 			note := "`Enter the correct command!\n\n`" + descp
 
-			b := devto.ParseInput(input)
+			b := devto.ValidateInput(input)
 			if !b {
 				msg.Text = note
 				break
 			}
 
-			query := devto.NewQuery(input)
+			query, err := devto.ParseInput(input)
+			if err != nil {
+				log.Print(err)
+				continue
+			}
 			articles, err := devto.GetArticles(query.Tag, query.Freshness)
 			if err != nil {
 				log.Print(err)
+				continue
 			}
 
 			msg.Text = articles.WriteArticles(query.Limit)
