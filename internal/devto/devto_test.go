@@ -24,3 +24,29 @@ func TestValidateInput(t *testing.T) {
 		}
 	}
 }
+
+func TestUnpackSliceToString(t *testing.T) {
+	cases := []struct {
+		name   string
+		args   []string
+		want   map[int]string
+		failed bool
+	}{
+		{"without args", []string{}, nil, false},
+		{"with tag", []string{"go"}, map[int]string{0: "go"}, false},
+		{"with failed tag", []string{"go"}, map[int]string{0: "rust"}, true},
+		{"with tag and freshness", []string{"go", "10"}, map[int]string{0: "go", 1: "10"}, false},
+		{"with tag, freshness and limit", []string{"go", "10", "5"}, map[int]string{0: "go", 1: "10", 2: "5"}, false},
+	}
+	for _, c := range cases {
+		var tag, freshness, limit string
+		unpackSliceToString(c.args, &tag, &freshness, &limit)
+		for k, v := range c.want {
+			if c.args[k] != v {
+				if !c.failed {
+					t.Errorf("unpackSliceToString: %s; got %v; want %v", c.name, tag, v)
+				}
+			}
+		}
+	}
+}
