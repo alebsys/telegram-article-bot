@@ -103,7 +103,7 @@ func ParseInput(input string) (*Query, error) {
 	return query, nil
 }
 
-func unpackSliceTostring(slice []string, vars ...*string) {
+func unpackSliceToString(slice []string, vars ...*string) {
 	for i, s := range slice {
 		*vars[i] = s
 	}
