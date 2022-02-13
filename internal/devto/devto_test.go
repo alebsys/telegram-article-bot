@@ -1,6 +1,9 @@
 package devto
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
 
 func TestValidateInput(t *testing.T) {
 	cases := []struct {
@@ -47,6 +50,33 @@ func TestUnpackSliceToString(t *testing.T) {
 					t.Errorf("unpackSliceToString: %s; got %v; want %v", c.name, tag, v)
 				}
 			}
+		}
+	}
+}
+
+func TestWithTag(t *testing.T) {
+	type ret struct {
+		query  *Query
+		err    error
+		failed bool
+	}
+	cases := []struct {
+		name string
+		tag  string
+		want ret
+	}{
+		{"without args, use defaults", "", ret{&Query{}, nil, false}},
+		{"with tag", "go", ret{&Query{Tag: "go"}, nil, false}},
+		{"with failed tag", "rust", ret{&Query{Tag: "erlang"}, fmt.Errorf("bad tag"), true}},
+		{"with error", "perl", ret{&Query{Tag: "perl"}, fmt.Errorf("bad tag"), false}},
+	}
+	for _, c := range cases {
+		query, err := NewQuery(WithTag(c.tag))
+		if err != nil && c.want.err == nil && !c.want.failed {
+			t.Errorf("WithTag: %s; got error %v; want error %v", c.name, err, c.want.err)
+		}
+		if c.want.err == nil && query != nil && query.Tag != c.want.query.Tag {
+			t.Errorf("WithTag: %s; got %v; want %v", c.name, query.Tag, c.want.query.Tag)
 		}
 	}
 }

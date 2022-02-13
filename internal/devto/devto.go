@@ -95,11 +95,14 @@ func ParseInput(input string) (*Query, error) {
 	var tag, freshness, limit string
 	unpackSliceToString(args[1:], &tag, &freshness, &limit)
 
-	query := NewQuery(
+	query, err := NewQuery(
 		WithTag(tag),
 		WithFreshness(freshness),
 		WithLimit(limit),
 	)
+	if err != nil {
+		return nil, err
+	}
 	return query, nil
 }
 
@@ -110,13 +113,16 @@ func unpackSliceToString(slice []string, vars ...*string) {
 }
 
 // NewQuery makes query to DEV.TO API from user input
-func NewQuery(opts ...QueryOption) *Query {
+func NewQuery(opts ...QueryOption) (*Query, error) {
 	query := new(Query)
 	// apply the list of options to Query
 	for _, opt := range opts {
-		opt(query)
+		err := opt(query)
+		if err != nil {
+			return nil, err
+		}
 	}
-	return query
+	return query, nil
 }
 
 // GetArticles makes request to DEV.TO API and return Articles struct
