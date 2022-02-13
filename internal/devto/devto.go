@@ -92,12 +92,21 @@ func ParseInput(input string) (*Query, error) {
 	argsSplit := strings.Split(input, " ")
 	copy(args, argsSplit)
 
+	var tag, freshness, limit string
+	unpackSliceTostring(args[1:], &tag, &freshness, &limit)
+
 	query := NewQuery(
-		WithTag(args[1]),
-		WithFreshness(args[2]),
-		WithLimit(args[3]),
+		WithTag(tag),
+		WithFreshness(freshness),
+		WithLimit(limit),
 	)
 	return query, nil
+}
+
+func unpackSliceTostring(slice []string, vars ...*string) {
+	for i, s := range slice {
+		*vars[i] = s
+	}
 }
 
 // NewQuery makes query to DEV.TO API from user input
