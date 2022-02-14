@@ -17,10 +17,7 @@ const (
 	defaultLimit     int    = 10
 	url                     = "https://dev.to/api/articles"
 	dotSymbol               = 9865 // unicode symbol of dot '⚉' https://unicodeplus.com/U+2689
-)
-
-var (
-	rgxp = [4]string{`^/article\s{1}[a-zA-z]+\s[1-9][0-9]*\s[1-9][0-9]*$`, `^/article\s{1}[a-zA-z]+\s[1-9][0-9]*$`, `^/article\s{1}[a-zA-z]*$`, `^/article$`}
+	rgxp                    = `^/article\s{1}[a-zA-z]+\s[1-9][0-9]*\s[1-9][0-9]*$|^/article\s{1}[a-zA-z]+\s[1-9][0-9]*$|^/article\s{1}[a-zA-z]*$|^/article$`
 )
 
 type Query struct {
@@ -77,18 +74,13 @@ func WithLimit(limit string) QueryOption {
 // ValidateInput parse input sting from user and return true if input is valid.
 // User input must be of the format: '/article go 10 5' or '/article go 10' or '/article go' or '/article'
 func ValidateInput(input string) bool {
-	for i := range rgxp {
-		matched, _ := regexp.MatchString(rgxp[i], input)
-		if matched {
-			return true
-		}
-	}
-	return false
+	matched, _ := regexp.MatchString(rgxp, input)
+	return matched
 }
 
 // ParseInput parse user input string and construct Query.
 func ParseInput(input string) (*Query, error) {
-	args := make([]string, 4, 4)
+	args := make([]string, 4)
 	argsSplit := strings.Split(input, " ")
 	copy(args, argsSplit)
 
