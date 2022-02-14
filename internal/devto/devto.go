@@ -12,11 +12,11 @@ import (
 )
 
 const (
-	tag       = ""
-	freshness = "10"
-	limit     = 10
-	url       = "https://dev.to/api/articles"
-	dotSymbol = 9865 // unicode symbol of dot '⚉' https://unicodeplus.com/U+2689
+	defaultTag       string = ""
+	defaultFreshness string = "10"
+	defaultLimit     int    = 10
+	url                     = "https://dev.to/api/articles"
+	dotSymbol               = 9865 // unicode symbol of dot '⚉' https://unicodeplus.com/U+2689
 )
 
 var (
@@ -28,6 +28,7 @@ type Query struct {
 	Freshness string
 	Limit     int
 }
+
 type Article struct {
 	Title string `json:"title"`
 	Url   string `json:"url"`
@@ -35,45 +36,93 @@ type Article struct {
 }
 type Articles []Article
 
-// ParseInput parse input from user and return true if input valid
+type QueryOption func(*Query) error
+
+// WithTag adds tag to Query or set default value.
+func WithTag(tag string) QueryOption {
+	return func(q *Query) error {
+		q.Tag = defaultTag
+		if len(tag) > 0 {
+			q.Tag = tag
+		}
+		return nil
+	}
+}
+
+// WithFreshness adds freshness to Query or set default value.
+func WithFreshness(freshness string) QueryOption {
+	return func(q *Query) error {
+		q.Freshness = defaultFreshness
+		if len(freshness) > 0 {
+			q.Freshness = freshness
+		}
+		return nil
+	}
+}
+
+// WithLimit adds limit to a Query or set default value.
+func WithLimit(limit string) QueryOption {
+	return func(q *Query) (err error) {
+		q.Limit = defaultLimit
+		if len(limit) > 0 {
+			q.Limit, err = strconv.Atoi(limit)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+}
+
+// ValidateInput parse input sting from user and return true if input is valid.
 // User input must be of the format: '/article go 10 5' or '/article go 10' or '/article go' or '/article'
-func ParseInput(input string) bool {
+func ValidateInput(input string) bool {
 	for i := range rgxp {
-		m, _ := regexp.MatchString(rgxp[i], input)
-		if m {
-			return m
+		matched, _ := regexp.MatchString(rgxp[i], input)
+		if matched {
+			return true
 		}
 	}
 	return false
 }
 
-// NewQuery makes query to DEV.TO API from user input
-func NewQuery(input string) *Query {
-	query := &Query{
-		Tag:       tag,
-		Freshness: freshness,
-		Limit:     limit,
+// ParseInput parse user input string and construct Query.
+func ParseInput(input string) (*Query, error) {
+	args := make([]string, 4, 4)
+	argsSplit := strings.Split(input, " ")
+	copy(args, argsSplit)
+
+	var tag, freshness, limit string
+	unpackSliceToString(args[1:], &tag, &freshness, &limit)
+
+	query, err := NewQuery(
+		WithTag(tag),
+		WithFreshness(freshness),
+		WithLimit(limit),
+	)
+	if err != nil {
+		return nil, err
 	}
+	return query, nil
+}
 
-	msg := strings.Split(input, " ")
+func unpackSliceToString(slice []string, vars ...*string) {
+	for i, s := range slice {
+		*vars[i] = s
+	}
+}
 
-	switch len(msg) {
-	case 2:
-		query.Tag = msg[1]
-	case 3:
-		query.Tag = msg[1]
-		query.Freshness = msg[2]
-	case 4:
-		query.Tag = msg[1]
-		query.Freshness = msg[2]
-		limit, _ := strconv.Atoi(msg[3])
-		if limit > 30 {
-			query.Limit = 30
-		} else {
-			query.Limit, _ = strconv.Atoi(msg[3])
+// NewQuery makes query to DEV.TO API from user input
+func NewQuery(opts ...QueryOption) (*Query, error) {
+	query := new(Query)
+	// apply the list of options to Query
+	for _, opt := range opts {
+		err := opt(query)
+		if err != nil {
+			return nil, err
 		}
 	}
-	return query
+	return query, nil
 }
 
 // GetArticles makes request to DEV.TO API and return Articles struct
