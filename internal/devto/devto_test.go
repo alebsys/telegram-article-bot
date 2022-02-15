@@ -21,8 +21,8 @@ func TestValidateInput(t *testing.T) {
 		{"blank command", "/", false},
 	}
 	for _, c := range cases {
-		got := ValidateInput(c.input)
-		if got != c.want {
+		got, err := ValidateInput(c.input)
+		if err != nil && got != c.want {
 			t.Errorf("ValidateInput: %s; got %v; want %v", c.name, got, c.want)
 		}
 	}

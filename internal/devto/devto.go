@@ -73,9 +73,8 @@ func WithLimit(limit string) QueryOption {
 
 // ValidateInput parse input sting from user and return true if input is valid.
 // User input must be of the format: '/article go 10 5' or '/article go 10' or '/article go' or '/article'
-func ValidateInput(input string) bool {
-	matched, _ := regexp.MatchString(rgxp, input)
-	return matched
+func ValidateInput(input string) (bool, error) {
+	return regexp.MatchString(rgxp, input)
 }
 
 // ParseInput parse user input string and construct Query.

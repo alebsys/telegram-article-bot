@@ -43,7 +43,10 @@ func main() {
 		case "article":
 			note := "`Enter the correct command!\n\n`" + descp
 
-			b := devto.ValidateInput(input)
+			b, err := devto.ValidateInput(input)
+			if err != nil {
+				log.Print(err)
+			}
 			if !b {
 				msg.Text = note
 				break
