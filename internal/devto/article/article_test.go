@@ -1,4 +1,4 @@
-package devto
+package article
 
 import (
 	"fmt"

@@ -4,12 +4,15 @@ import (
 	"log"
 	"os"
 
-	"github.com/alebsys/telegram-article-bot/internal/devto"
+	"github.com/alebsys/telegram-article-bot/internal/devto/article"
+	"github.com/alebsys/telegram-article-bot/internal/devto/podcast"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
 const (
-	descp = "`Request example::\n/article go 10 5\nгде:\n* go - topic (tag);\n* 10 - search period in days;\n* 5 - number of posts.`"
+	// descp        = "`Request example:\n/article go 10 5\n* go - topic (tag);\n* 10 - search period in days;\n* 5 - number of posts.`"
+	descpArticle = "`Request example:\n/article go 10 5\n* go - topic (tag);\n* 10 - search period in days;\n* 5 - number of posts.`"
+	descpPodcast = "`Request example:\n/podcast gotime\n* gotime - topic (tag).`"
 )
 
 func main() {
@@ -39,11 +42,11 @@ func main() {
 
 		switch update.Message.Command() {
 		case "help":
-			msg.Text = "`Hello! I can find articles of interest to you on DEV.TO\n\n`" + descp
+			msg.Text = "`Hello! I can find articles and podcasts of interest to you on DEV.TO\n\n`" + descpArticle + "\n\n`or`\n\n" + descpPodcast
 		case "article":
-			note := "`Enter the correct command!\n\n`" + descp
+			note := "`Enter the correct command!\n\n`" + descpArticle
 
-			b, err := devto.ValidateInput(input)
+			b, err := article.ValidateInput(input)
 			if err != nil {
 				log.Print(err)
 			}
@@ -52,18 +55,39 @@ func main() {
 				break
 			}
 
-			query, err := devto.ParseInput(input)
+			query, err := article.ParseInput(input)
 			if err != nil {
 				log.Print(err)
 				continue
 			}
-			articles, err := devto.GetArticles(query.Tag, query.Freshness)
+			articles, err := article.GetArticles(query.Tag, query.Freshness)
 			if err != nil {
 				log.Print(err)
 				continue
 			}
 
 			msg.Text = articles.WriteArticles(query.Limit)
+		case "podcast":
+			note := "`Enter the correct command!\n\n`" + descpPodcast
+
+			b, err := podcast.ValidateInput(input)
+			if err != nil {
+				log.Print(err)
+			}
+			if !b {
+				msg.Text = note
+				break
+			}
+
+			query := podcast.ParseInput(input)
+
+			podcasts, err := podcast.GetPodcasts(query.Tag)
+			if err != nil {
+				log.Print(err)
+				continue
+			}
+
+			msg.Text = podcasts.WritePodcasts()
 		default:
 			msg.Text = "`I don't know this command. Enter /help`"
 		}
