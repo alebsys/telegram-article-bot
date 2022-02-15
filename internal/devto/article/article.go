@@ -1,4 +1,4 @@
-package devto
+package article
 
 import (
 	"bytes"
@@ -71,7 +71,7 @@ func WithLimit(limit string) QueryOption {
 	}
 }
 
-// ValidateInput parse input sting from user and return true if input is valid.
+// ValidateInput parse input string from user and return true if input is valid.
 // User input must be of the format: '/article go 10 5' or '/article go 10' or '/article go' or '/article'
 func ValidateInput(input string) (bool, error) {
 	return regexp.MatchString(rgxp, input)
